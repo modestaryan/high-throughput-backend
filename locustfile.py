@@ -1,7 +1,7 @@
 from locust import HttpUser, task, between
 
 class MyUser(HttpUser):
-    wait_time = between(0.01, 0.05)
+    wait_time = between(0.001, 0.01)
 
     def on_start(self):
         # 🔐 LOGIN FIRST
