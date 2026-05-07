@@ -1,0 +1,20 @@
+[project]
+name = "high-throughput-backend"
+version = "0.1.0"
+description = "Distributed high-throughput backend system built with FastAPI, PostgreSQL, Redis, JWT authentication, AWS EC2 deployment, and Locust load testing."
+readme = "README.md"
+requires-python = ">=3.11"
+
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "asyncpg",
+    "psycopg2-binary",
+    "redis",
+    "python-jose",
+    "passlib[bcrypt]",
+    "pydantic-settings",
+    "python-dotenv",
+    "locust"
+]
