@@ -1,6 +1,5 @@
 import time
 import logging
-from typing import Optional
 from fastapi import Request, Response, HTTPException, status
 from app.core.redis import redis_client
 from app.core.config import settings
