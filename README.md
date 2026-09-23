@@ -1,520 +1,219 @@
-````md
-# High-Throughput Backend System
+# High-Throughput Distributed Backend Service
 
-A scalable and distributed-ready backend system built using **FastAPI**, **PostgreSQL**, **Redis**, and **JWT Authentication**.  
-The project is designed to handle high traffic efficiently using asynchronous programming, multiple workers, cloud deployment, and distributed load testing.
+A high-performance, production-ready distributed backend system built with **FastAPI**, **PostgreSQL**, **Redis**, **Docker**, and **JWT Authentication with Role-Based Access Control (RBAC)**.
 
----
-
-# 🚀 Project Overview
-
-Modern applications require backend systems capable of handling thousands of concurrent requests with low latency and high reliability.  
-This project demonstrates the implementation of a **high-throughput backend architecture** capable of supporting scalable API services.
-
-The system focuses on:
-
-- High request throughput
-- Scalable backend architecture
-- Secure JWT authentication
-- Distributed load testing
-- Cloud deployment on AWS EC2
-- Redis-based rate limiting
-- Async database handling
-- Production-style backend deployment
+Designed for high request throughput, horizontal worker scaling, distributed rate limiting, idempotent request processing, and cloud deployment on AWS EC2.
 
 ---
 
-# 🎯 Objectives
+## 🚀 Key Features
 
-- Build a scalable backend system
-- Implement JWT-based authentication
-- Handle concurrent requests efficiently
-- Deploy backend on AWS EC2
-- Implement Redis-based rate limiting
-- Perform distributed load testing using Locust
-- Design a distributed-ready architecture
-- Learn real-world backend deployment and debugging
-
----
-
-# 🏗️ Tech Stack
-
-| Technology | Purpose |
-|------------|---------|
-| FastAPI | Async backend framework |
-| PostgreSQL | Relational database |
-| SQLAlchemy | ORM |
-| AsyncPG | Async PostgreSQL driver |
-| Redis | Rate limiting and caching |
-| JWT | Authentication |
-| Uvicorn | ASGI server |
-| Locust | Load testing |
-| AWS EC2 | Cloud deployment |
-| Python | Backend programming language |
+* **⚡ Async Architecture**: Built on FastAPI, `asyncpg`, and `redis.asyncio` for non-blocking I/O and low-latency API performance.
+* **🔐 Authentication & RBAC**: JWT-based stateless authentication with Role-Based Access Control (`user`, `manager`, `admin`) and `bcrypt` password hashing.
+* **🚦 Redis Distributed Rate Limiting**: Centralized Redis fixed-window rate limiter with `X-RateLimit-*` response headers.
+* **🔁 Distributed Idempotency**: Header-driven idempotency engine (`X-Idempotency-Key`) preventing duplicate processing under network retries.
+* **🔒 Concurrency Safety**: Row-level pessimistic locking (`SELECT ... FOR UPDATE`) and atomic transaction boundaries for race-condition prevention.
+* **🐳 Docker & Docker Compose**: Full containerization setup including FastAPI (`web`), PostgreSQL 16 (`db`), Redis 7 (`redis`), and Locust (`locust`).
+* **🧪 Automated Test Suite**: Comprehensive async unit and integration tests using Pytest, `httpx`, and in-memory SQLite fixtures.
+* **📈 Load Testing Ready**: Built-in Locust benchmark scenarios simulating concurrent users and distributed master/worker execution.
 
 ---
 
-# ✨ Features
+## 🏗️ Tech Stack
 
-## 🔐 Authentication System
-- User Registration
-- User Login
-- JWT Token Generation
-- Protected Routes
-- Password Hashing
-
----
-
-## ⚡ High Performance Backend
-- Async request handling using FastAPI
-- Multiple Uvicorn workers
-- Low latency APIs
-- Distributed-ready architecture
+| Component | Technology | Description |
+| :--- | :--- | :--- |
+| **Language** | Python 3.11+ | Core backend runtime |
+| **Framework** | FastAPI | High-performance async web framework |
+| **Database** | PostgreSQL 16 | Relational database with UUID keys |
+| **ORM & Async Driver** | SQLAlchemy 2.0 + asyncpg | Asynchronous ORM database access |
+| **Cache & Distributed State** | Redis 7 | Distributed caching, rate limiting, & idempotency |
+| **Authentication** | JWT (`python-jose`) + `passlib[bcrypt]` | Token issuance and password security |
+| **Containerization** | Docker & Docker Compose | Multi-container orchestration |
+| **Load Testing** | Locust | Concurrent user load benchmarking |
+| **Testing** | Pytest + `pytest-asyncio` + `httpx` | Automated test suite |
 
 ---
 
-## 🚦 Rate Limiting
-- Redis-based rate limiting
-- Prevents API abuse
-- Scalable request control
-
----
-
-## 🗄️ Database Integration
-- PostgreSQL database
-- Async SQLAlchemy support
-- Structured schema design
-- Persistent user storage
-
----
-
-## ☁️ Cloud Deployment
-- Deployed on AWS EC2
-- Public API exposure
-- Security group configuration
-- Production-ready deployment setup
-
----
-
-## 🧪 Load Testing
-- Locust-based performance testing
-- Distributed Locust workers
-- Concurrent user simulation
-- Throughput and latency analysis
-
----
-
-# 📂 Project Structure
+## 📂 Project Structure
 
 ```text
 high-throughput-backend/
-│
 ├── app/
 │   ├── api/
+│   │   ├── admin.py           # Admin endpoints (RBAC protected)
+│   │   ├── auth.py            # Registration & JWT login endpoints
+│   │   ├── deps.py            # Auth & RBAC role dependency factors
+│   │   └── user.py            # User profile endpoints (Redis cached)
 │   ├── core/
+│   │   ├── config.py          # App settings via pydantic-settings
+│   │   ├── idempotency.py     # Redis idempotency key interceptor
+│   │   ├── rate_limiter.py    # Redis rate limiter dependency
+│   │   ├── redis.py           # Async Redis client instance
+│   │   └── security.py       # Password hashing & JWT token issuance
 │   ├── db/
+│   │   ├── base.py            # Declarative Base
+│   │   └── session.py         # Async SQLAlchemy engine & session factory
 │   ├── models/
+│   │   └── user.py            # User SQLAlchemy ORM model
 │   ├── schemas/
+│   │   └── user.py            # Pydantic schemas (UserCreate, UserResponse, etc.)
 │   ├── services/
-│   └── main.py
-│
+│   │   ├── auth_service.py    # Registration & login service logic
+│   │   └── concurrency_service.py # Pessimistic locking demonstration
+│   └── main.py                # FastAPI entrypoint, lifespan, CORS & health check
+├── docker/
 ├── load_tests/
+│   └── locustfile.py          # Locust load testing scenarios
 ├── scripts/
+│   └── seed_db.py             # Database initial user/admin seeding script
 ├── tests/
-├── locustfile.py
-├── makefile
-├── pyproject.toml
-├── README.md
-└── .env
-````
+│   ├── conftest.py            # Pytest async fixtures & SQLite test DB
+│   ├── test_auth.py           # Registration & login test suite
+│   ├── test_idempotency.py    # Idempotency duplicate request tests
+│   └── test_rbac.py           # Role-based access control tests
+├── Dockerfile                 # Multi-stage production container build
+├── docker-compose.yml         # Compose stack (Web, DB, Redis, Locust)
+├── locustfile.py              # Root Locust scenario wrapper
+├── makefile                   # CLI targets (run, prod, test, seed, docker-up)
+├── pyproject.toml             # Dependencies & project metadata
+└── README.md                  # Project documentation
+```
 
 ---
 
-# ⚙️ Installation & Setup
+## ⚙️ Quick Start
 
-## 1️⃣ Clone Repository
+### 1️⃣ Clone & Set Up Environment
 
 ```bash
 git clone https://github.com/modestaryan/high-throughput-backend.git
-
 cd high-throughput-backend
-```
 
----
-
-## 2️⃣ Create Virtual Environment
-
-```bash
 python3 -m venv venv
-
 source venv/bin/activate
+pip install -e .
 ```
 
----
+### 2️⃣ Configure Environment Variables
 
-## 3️⃣ Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-OR
-
-```bash
-pip install .
-```
-
----
-
-# 🗄️ PostgreSQL Setup
-
-## Install PostgreSQL
-
-```bash
-sudo apt install postgresql postgresql-contrib -y
-```
-
----
-
-## Create Database
-
-```bash
-sudo -u postgres psql
-```
-
-```sql
-CREATE DATABASE app;
-CREATE USER aryanshekhar WITH PASSWORD '*********';
-GRANT ALL PRIVILEGES ON DATABASE app TO aryanshekhar;
-```
-
----
-
-# ⚡ Redis Setup
-
-## Install Redis
-
-```bash
-sudo apt install redis-server -y
-```
-
-## Start Redis
-
-```bash
-sudo service redis-server start
-```
-
----
-
-# 🔐 Environment Variables
-
-Create `.env` file in project root:
+Create a `.env` file in the project root:
 
 ```env
-DATABASE_URL=postgresql+asyncpg://aryanshekhar:psqlaryan@localhost:5432/app
-
-JWT_SECRET=supersecret
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/high_throughput_db
+JWT_SECRET=supersecretjwtkeyforhighthroughputbackend2026
+REDIS_HOST=localhost
+REDIS_PORT=6379
+RATE_LIMIT_REQUESTS=1000
+RATE_LIMIT_WINDOW_SECONDS=60
 ```
 
 ---
 
-# 🚀 Running the Backend
+## 🐳 Docker Deployment (Recommended)
 
-## Development Mode
+Start the full containerized stack (FastAPI, PostgreSQL 16, Redis 7, Locust) with a single command:
 
 ```bash
-uvicorn app.main:app --reload
+# Launch container stack in detached mode
+make docker-up
+
+# Stop and remove containers & volumes
+make docker-down
 ```
 
 ---
 
-## Production Mode
+## 🛠️ Makefile Commands
 
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 6
-```
-
----
-
-# 🌐 API Documentation
-
-Swagger UI:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-AWS Deployment Example:
-
-```text
-http://13.233.255.137:8000/docs
-```
+| Command | Action |
+| :--- | :--- |
+| `make run` | Start local development server with auto-reload (`uvicorn app.main:app --reload`) |
+| `make prod` | Run production server with 6 multi-process workers |
+| `make aws-prod` | Run production server with 8 multi-process workers |
+| `make test` | Execute full Pytest automated test suite |
+| `make seed` | Seed database with initial admin and user accounts |
+| `make docker-up` | Build and start full Docker Compose infrastructure |
+| `make docker-down` | Tear down Docker Compose infrastructure |
+| `make locust-local` | Launch Locust load testing dashboard targeting local backend |
 
 ---
 
-# 🔌 API Endpoints
+## 🔌 API Documentation & Endpoints
 
-## Authentication APIs
+Interactive Swagger UI documentation is available at `http://127.0.0.1:8000/docs`.
 
-### Register User
+### Authentication Endpoints
 
 ```http
 POST /api/v1/auth/register
+Header: [Optional] X-Idempotency-Key: <unique-uuid>
+Body: { "email": "user@example.com", "password": "securepassword", "role": "user" }
 ```
-
-### Login User
 
 ```http
 POST /api/v1/auth/login
+Body: { "email": "user@example.com", "password": "securepassword" }
+Response: { "access_token": "<jwt>", "token_type": "bearer", "user": { ... } }
 ```
 
----
-
-## User APIs
-
-### Current User
+### User Profile Endpoints
 
 ```http
 GET /api/v1/users/me
+Header: Authorization: Bearer <token>
+Response: { "id": "<uuid>", "email": "user@example.com", "role": "user" }
 ```
 
----
+### Admin Endpoints (RBAC Restricted: `role = admin`)
 
-## Health Check
+```http
+GET /api/v1/admin/users
+Header: Authorization: Bearer <admin-token>
+```
+
+```http
+PATCH /api/v1/admin/users/{user_id}/role
+Header: Authorization: Bearer <admin-token>
+Body: { "role": "manager" }
+```
+
+```http
+GET /api/v1/admin/stats
+Header: Authorization: Bearer <admin-token>
+```
+
+### Health Check
 
 ```http
 GET /health
+Response: { "status": "healthy", "database": "ok", "redis": "ok" }
 ```
 
 ---
 
-# 🧪 Load Testing with Locust
+## 🧪 Running Automated Tests
 
-## Run Locust
+Run the full async Pytest test suite:
 
 ```bash
-locust -f locustfile.py --host=http://127.0.0.1:8000
+make test
 ```
 
 ---
 
-## Distributed Load Testing
+## 📈 Load Testing with Locust
 
-### Master
+Launch the Locust web dashboard:
 
 ```bash
-locust -f locustfile.py --master --host=http://127.0.0.1:8000
+make locust-local
 ```
 
-### Worker
-
-```bash
-locust -f locustfile.py --worker --master-host=127.0.0.1
-```
+Access the dashboard at `http://localhost:8089` to simulate concurrent virtual users.
 
 ---
 
-## Locust Dashboard
+## 📜 License
 
-```text
-http://localhost:8089
-```
-
----
-
-# 📈 Performance Goals
-
-* High throughput API design
-* Concurrent request handling
-* Distributed load testing
-* Cloud deployment readiness
-* Scalable backend architecture
-
----
-
-# ☁️ AWS EC2 Deployment
-
-The backend was deployed on AWS EC2 using:
-
-* Ubuntu server
-* Uvicorn workers
-* PostgreSQL
-* Redis
-* Security Group configuration
-
-Deployment included:
-
-* Public API exposure
-* Multi-worker backend execution
-* Database integration
-* Distributed load testing setup
-
----
-
-# 🔒 Security Features
-
-* JWT-based authentication
-* Password hashing using bcrypt
-* Environment variable based secrets management
-* Protected API routes
-* Redis-backed request limiting
-
----
-
-# 🧱 System Architecture
-
-Client Request
-↓
-FastAPI Application
-↓
-Authentication Layer (JWT)
-↓
-Service Layer
-↓
-PostgreSQL Database
-↓
-Redis Cache / Rate Limiter
-
----
-
-# 📊 Load Testing Results
-
-The backend was stress tested using Locust in both local and distributed modes.
-
-### Test Environment
-
-* FastAPI + Uvicorn workers
-* PostgreSQL database
-* Redis cache
-* AWS EC2 deployment
-* Distributed Locust workers
-
-### Observations
-
-* Stable concurrent request handling
-* Low latency for lightweight endpoints
-* Successful multi-worker execution
-* Distributed load generation support
-
----
-
-# 📌 Challenges Faced
-
-During development and deployment several real-world backend issues were encountered and resolved:
-
-* Async SQLAlchemy engine handling
-* Circular import issues
-* PostgreSQL permission configuration
-* Environment variable loading
-* AWS EC2 networking and security group setup
-* Distributed load testing setup
-* Multi-worker backend execution
-
-These challenges helped in understanding production-grade backend debugging and deployment workflows.
-
----
-
-# 🚀 Scalability Strategy
-
-The project is designed to scale horizontally using:
-
-* Multiple Uvicorn workers
-* Distributed Locust workers
-* Redis for shared state and caching
-* AWS cloud deployment
-* Stateless API architecture
-
-Future scaling can include:
-
-* Nginx Load Balancer
-* Docker containers
-* Kubernetes orchestration
-* Auto-scaling groups
-
----
-
-# 🧠 Key Concepts Implemented
-
-* Async Programming
-* JWT Authentication
-* Distributed System Readiness
-* Connection Handling
-* API Security
-* Cloud Deployment
-* Load Testing
-* Rate Limiting
-* Production Backend Deployment
-
----
-
-# 🔮 Future Enhancements
-
-* Nginx Reverse Proxy
-* Docker & Kubernetes
-* CI/CD Pipeline
-* Prometheus + Grafana Monitoring
-* Auto Scaling
-* Load Balancer Integration
-* Microservices Architecture
-
----
-
-# 🎓 Learning Outcomes
-
-This project helped in understanding:
-
-* Backend architecture design
-* High throughput system handling
-* Cloud deployment workflows
-* Async Python development
-* Database integration
-* Distributed load testing
-* Production debugging
-* Worker-based backend scaling
-
----
-
-# 📚 References
-
-* FastAPI Documentation
-* PostgreSQL Documentation
-* Redis Documentation
-* SQLAlchemy Documentation
-* AWS EC2 Documentation
-* Locust Documentation
-* Python Documentation
-
----
-
-# 👨‍💻 Author
-
-**Aryan Shekhar**
-
-BCA Student | Backend Development Enthusiast
-
----
-
-# 📜 License
-
-This project is developed for educational and learning purposes.
-
----
-
-# 🙌 Acknowledgements
-
-Special thanks to:
-
-* FastAPI Community
-* SQLAlchemy Documentation
-* Redis Documentation
-* AWS EC2 Documentation
-* Open-source backend engineering resources
-
----
-
-# ⭐ Final Note
-
-This project demonstrates the implementation of a scalable backend system capable of handling high traffic using modern backend engineering practices, distributed load testing strategies, asynchronous programming, and cloud deployment techniques.
-
-```
-```
+Developed for academic and educational purposes.
