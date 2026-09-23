@@ -1,4 +1,5 @@
-from fastapi import Depends, HTTPException
+from typing import List
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +15,7 @@ security = HTTPBearer()
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db)
-):
+) -> User:
     token = credentials.credentials
 
     try:
@@ -22,17 +23,40 @@ async def get_current_user(
         user_id = payload.get("sub")
 
         if user_id is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload"
+            )
 
-        user_id = UUID(user_id)
+        user_uuid = UUID(user_id)
 
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except (JWTError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )
 
-    result = await db.execute(select(User).where(User.id == user_id))
+    result = await db.execute(select(User).where(User.id == user_uuid))
     user = result.scalars().first()
 
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User no longer exists"
+        )
 
     return user
+
+def require_role(*allowed_roles: str):
+    """
+    Role-Based Access Control (RBAC) dependency factor.
+    Enforces user.role is among the allowed_roles.
+    """
+    async def role_checker(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied: Required role ({', '.join(allowed_roles)}), but user has role '{current_user.role}'"
+            )
+        return current_user
+    return role_checker
