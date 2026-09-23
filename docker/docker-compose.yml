@@ -4,7 +4,7 @@ services:
   web:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     container_name: backend_app
     ports:
       - "8000:8000"
@@ -57,7 +57,7 @@ services:
   locust:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     container_name: locust_load_tester
     command: locust -f locustfile.py --host=http://web:8000
     ports:
