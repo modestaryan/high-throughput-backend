@@ -7,6 +7,18 @@ prod:
 aws-prod:
 	uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 8
 
+test:
+	pytest -v
+
+seed:
+	python scripts/seed_db.py
+
+docker-up:
+	docker-compose up --build -d
+
+docker-down:
+	docker-compose down -v
+
 locust-local:
 	locust -f locustfile.py --host=http://127.0.0.1:8000
 
