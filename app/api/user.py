@@ -19,7 +19,9 @@ async def get_me(current_user: User = Depends(get_current_user)):
         # 1. Check Redis cache
         cached_user = await redis_client.get(cache_key)
         if cached_user:
-            return json.loads(cached_user)
+            data = json.loads(cached_user)
+            if isinstance(data, dict) and "role" in data and "email" in data:
+                return data
     except Exception:
         pass
 
