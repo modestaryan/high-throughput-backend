@@ -30,7 +30,7 @@ async def get_current_user(
 
         user_uuid = UUID(user_id)
 
-    except (JWTError, ValueError):
+    except (JWTError, ValueError, TypeError, AttributeError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials"
